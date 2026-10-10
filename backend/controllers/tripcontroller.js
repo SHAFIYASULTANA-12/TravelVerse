@@ -3,7 +3,6 @@ const Trip = require("../models/Trip");
 
 // ==========================================
 // CREATE TRIP
-// Guest + Logged-in users
 // ==========================================
 
 const createTrip = async (req, res) => {
@@ -15,24 +14,26 @@ const createTrip = async (req, res) => {
             destination,
             startDate,
             endDate,
-            budget
+            budget,
+            description
         } = req.body;
 
         const tripName = title || name;
 
         if (!tripName || !destination || !startDate || !endDate) {
             return res.status(400).json({
-                message:
-                    "Please provide trip name, destination, start date and end date"
+                message: "Please provide trip name, destination, start date and end date"
             });
         }
 
         const trip = await Trip.create({
+            title: tripName,
             name: tripName,
             destination,
             startDate,
             endDate,
-            budget: budget || 0
+            budget: budget || 0,
+            description: description || ""
         });
 
         res.status(201).json({
@@ -48,14 +49,12 @@ const createTrip = async (req, res) => {
             message: "Failed to create trip",
             error: error.message
         });
-
     }
 };
 
 
 // ==========================================
 // GET ALL TRIPS
-// Guest + Logged-in users
 // ==========================================
 
 const getTrips = async (req, res) => {
@@ -74,7 +73,6 @@ const getTrips = async (req, res) => {
             message: "Failed to fetch trips",
             error: error.message
         });
-
     }
 };
 
@@ -98,11 +96,12 @@ const getTripById = async (req, res) => {
 
     } catch (error) {
 
+        console.error("Get trip error:", error);
+
         res.status(500).json({
             message: "Failed to fetch trip",
             error: error.message
         });
-
     }
 };
 
@@ -136,11 +135,12 @@ const updateTrip = async (req, res) => {
 
     } catch (error) {
 
+        console.error("Update trip error:", error);
+
         res.status(500).json({
             message: "Failed to update trip",
             error: error.message
         });
-
     }
 };
 
@@ -152,9 +152,7 @@ const updateTrip = async (req, res) => {
 const deleteTrip = async (req, res) => {
     try {
 
-        const trip = await Trip.findByIdAndDelete(
-            req.params.id
-        );
+        const trip = await Trip.findByIdAndDelete(req.params.id);
 
         if (!trip) {
             return res.status(404).json({
@@ -168,34 +166,121 @@ const deleteTrip = async (req, res) => {
 
     } catch (error) {
 
+        console.error("Delete trip error:", error);
+
         res.status(500).json({
             message: "Failed to delete trip",
             error: error.message
         });
-
     }
 };
 
 
 // ==========================================
-// PLACEHOLDER FOR FUTURE FEATURES
+// ADD ITINERARY
 // ==========================================
 
 const addItinerary = async (req, res) => {
+    try {
 
-    res.status(501).json({
-        message: "Itinerary feature will be added next"
-    });
+        const trip = await Trip.findById(req.params.id);
 
+        if (!trip) {
+            return res.status(404).json({
+                message: "Trip not found"
+            });
+        }
+
+        const {
+            date,
+            time,
+            title,
+            activity,
+            location,
+            description,
+            duration
+        } = req.body;
+
+        const itineraryItem = {
+            date,
+            time: time || "",
+            title: title || "",
+            activity: activity || "",
+            location: location || "",
+            description: description || "",
+            duration: duration || ""
+        };
+
+        trip.itinerary.push(itineraryItem);
+
+        await trip.save();
+
+        res.status(201).json({
+            message: "Itinerary added successfully",
+            trip
+        });
+
+    } catch (error) {
+
+        console.error("Add itinerary error:", error);
+
+        res.status(500).json({
+            message: "Failed to add itinerary",
+            error: error.message
+        });
+    }
 };
 
 
+// ==========================================
+// ADD EXPENSE
+// ==========================================
+
 const addExpense = async (req, res) => {
+    try {
 
-    res.status(501).json({
-        message: "Expense feature will be added next"
-    });
+        const trip = await Trip.findById(req.params.id);
 
+        if (!trip) {
+            return res.status(404).json({
+                message: "Trip not found"
+            });
+        }
+
+        const {
+            title,
+            category,
+            amount,
+            date,
+            description
+        } = req.body;
+
+        const expense = {
+            title: title || "",
+            category: category || "Other",
+            amount: amount || 0,
+            date,
+            description: description || ""
+        };
+
+        trip.expenses.push(expense);
+
+        await trip.save();
+
+        res.status(201).json({
+            message: "Expense added successfully",
+            trip
+        });
+
+    } catch (error) {
+
+        console.error("Add expense error:", error);
+
+        res.status(500).json({
+            message: "Failed to add expense",
+            error: error.message
+        });
+    }
 };
 
 
